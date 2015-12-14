@@ -1,3 +1,7 @@
+sudo: required
+
+dist: trusty
+
 language: cpp
 
 compiler:
@@ -11,7 +15,7 @@ addons:
       #- libboost-regex1.55-dev
       #- libboost-system1.55-dev
       #- libboost-test1.55-dev
-      - libboost1.55-dev
+      #- libboost1.55-dev
       - liblapack-dev
 
 install:
