@@ -1,0 +1,30 @@
+language: cpp
+
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+      - libboost-date-time1.55-dev
+      - libboost-filesystem1.55-dev
+      - libboost-test1.55-dev
+      - liblapack-dev
+
+install:
+    - cd ..
+    - git clone git@github.com:OPM/opm-common.git
+    - git clone git@github.com:Ensembles/ert.git
+    - cd ert
+    - mkdir build
+    - cd build
+    - cmake ../devel/
+    - make
+
+
+before_script:
+    - mkdir build
+    - cd build
+    - cmake ../
+
+script: make && ctest --output-on-failure
