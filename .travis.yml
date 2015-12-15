@@ -10,19 +10,13 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - libboost1.55-all-dev
-      #- libboost-date-time1.55-dev
-      #- libboost-filesystem1.55-dev
-      #- libboost-regex1.55-dev
-      #- libboost-system1.55-dev
-      #- libboost-test1.55-dev
-#      - libboost-dev
       - gcc-4.8
       - g++-4.8
       - liblapack-dev
 
-
 install:
     - cd ..
+    - git clone https://github.com/OPM/opm-data.git
     - git clone https://github.com/OPM/opm-common.git
     - cd opm-common
     - mkdir build
@@ -40,6 +34,7 @@ install:
     - cd ../../
 
     - cd opm-parser
+    - export CXX="g++-4.8" CC="gcc-4.8"
 
 before_script:
     - mkdir build
