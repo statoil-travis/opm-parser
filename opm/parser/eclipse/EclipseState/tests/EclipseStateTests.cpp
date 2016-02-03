@@ -33,9 +33,16 @@
 
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/ScheduleEnums.hpp>
+#include <opm/parser/eclipse/EclipseState/SimulationConfig/ThresholdPressure.hpp>
+#include <opm/parser/eclipse/EclipseState/SimulationConfig/SimulationConfig.hpp>
 #include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/parser/eclipse/EclipseState/checkDeck.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/GridProperty.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/Fault.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/FaultCollection.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/TransMult.hpp>
+#include <opm/parser/eclipse/EclipseState/IOConfig/IOConfig.hpp>
 #include <opm/parser/eclipse/Units/ConversionFactors.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseMode.hpp>
@@ -301,8 +308,8 @@ BOOST_AUTO_TEST_CASE(GetFaults) {
     BOOST_CHECK( faults->hasFault("F1") );
     BOOST_CHECK( faults->hasFault("F2") );
 
-    std::shared_ptr<Fault> F1 = faults->getFault("F1");
-    std::shared_ptr<Fault> F2 = faults->getFault("F2");
+    std::shared_ptr<const Fault> F1 = faults->getFault("F1");
+    std::shared_ptr<const Fault> F2 = faults->getFault("F2");
 
     BOOST_CHECK_EQUAL( 0.50 , F1->getTransMult());
     BOOST_CHECK_EQUAL( 0.25 , F2->getTransMult());

@@ -18,8 +18,7 @@
  */
 
 #include <opm/parser/eclipse/Deck/DeckDoubleItem.hpp>
-
-#include <boost/lexical_cast.hpp>
+#include <opm/parser/eclipse/Units/Dimension.hpp>
 
 #include <algorithm>
 #include <iostream>

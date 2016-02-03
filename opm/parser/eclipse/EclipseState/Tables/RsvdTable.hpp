@@ -22,39 +22,15 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class RsvdTable : public SimpleTable {
     public:
-        friend class TableManager;
-        RsvdTable() = default;
+        RsvdTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the RSVD keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{"DEPTH", "RS"});
-
-
-            SimpleTable::checkNonDefaultable("DEPTH");
-            SimpleTable::checkMonotonic("DEPTH", /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("RS");
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getDepthColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getRsColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getDepthColumn() const;
+        const TableColumn& getRsColumn() const;
     };
 }
 

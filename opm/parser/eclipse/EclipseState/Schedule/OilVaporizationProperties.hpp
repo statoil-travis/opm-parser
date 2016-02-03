@@ -1,8 +1,9 @@
 #ifndef DRSDT_HPP
 #define DRSDT_HPP
-#include <iostream>
+
 #include <string>
 #include <memory>
+
 #include <opm/parser/eclipse/EclipseState/Schedule/ScheduleEnums.hpp>
 
 namespace Opm

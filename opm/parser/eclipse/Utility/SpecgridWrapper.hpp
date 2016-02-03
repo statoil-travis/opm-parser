@@ -20,9 +20,11 @@
 #define	OPM_PARSER_SPECGRID_WRAPPER_HPP
 
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 
 #include <vector>
-#include <algorithm>
 
 namespace Opm {
     class SpecgridWrapper {

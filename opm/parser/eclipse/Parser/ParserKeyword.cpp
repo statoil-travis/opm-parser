@@ -21,12 +21,16 @@
 
 #include <opm/json/JsonObject.hpp>
 
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 #include <opm/parser/eclipse/Parser/ParserConst.hpp>
-#include <opm/parser/eclipse/Parser/ParserKeyword.hpp>
-#include <opm/parser/eclipse/Parser/ParserIntItem.hpp>
 #include <opm/parser/eclipse/Parser/ParserDoubleItem.hpp>
-#include <opm/parser/eclipse/Parser/ParserStringItem.hpp>
 #include <opm/parser/eclipse/Parser/ParserFloatItem.hpp>
+#include <opm/parser/eclipse/Parser/ParserIntItem.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeyword.hpp>
+#include <opm/parser/eclipse/Parser/ParserRecord.hpp>
+#include <opm/parser/eclipse/Parser/ParserStringItem.hpp>
+#include <opm/parser/eclipse/RawDeck/RawKeyword.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -790,7 +794,7 @@ namespace Opm {
     }
 
 
-    void ParserKeyword::applyUnitsToDeck(std::shared_ptr<const Deck> deck , std::shared_ptr<const DeckKeyword> deckKeyword) const {
+    void ParserKeyword::applyUnitsToDeck(const Deck& deck, std::shared_ptr<const DeckKeyword> deckKeyword) const {
         for (size_t index = 0; index < deckKeyword->size(); index++) {
             std::shared_ptr<const ParserRecord> parserRecord = getRecord(index);
             std::shared_ptr<const DeckRecord> deckRecord = deckKeyword->getRecord(index);

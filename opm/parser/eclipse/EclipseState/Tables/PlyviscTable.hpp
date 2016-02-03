@@ -22,44 +22,15 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class PlyviscTable : public SimpleTable {
     public:
+        PlyviscTable( std::shared_ptr< const DeckItem > item );
 
-        friend class TableManager;
-        PlyviscTable() = default;
-
-        /*!
-         * \brief Read the PLYVISC keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{
-                                 "PolymerConcentration",
-                                 "ViscosityMultiplier"
-                                     });
-
-            SimpleTable::checkNonDefaultable("PolymerConcentration");
-            SimpleTable::checkMonotonic("PolymerConcentration", /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("ViscosityMultiplier");
-            SimpleTable::checkMonotonic("ViscosityMultiplier", /*isAscending=*/true);
-        }
-
-    public:
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getPolymerConcentrationColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getViscosityMultiplierColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getPolymerConcentrationColumn() const;
+        const TableColumn& getViscosityMultiplierColumn() const;
     };
 }
 

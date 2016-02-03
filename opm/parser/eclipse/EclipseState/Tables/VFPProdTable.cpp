@@ -17,12 +17,16 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <opm/parser/eclipse/EclipseState/Tables/VFPProdTable.hpp>
-#include <opm/parser/eclipse/Parser/ParserKeywords.hpp>
 #include <algorithm>
+#include <iostream>
 
-
-
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/VFPProdTable.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/V.hpp>
+#include <opm/parser/eclipse/Units/Dimension.hpp>
+#include <opm/parser/eclipse/Units/UnitSystem.hpp>
 
 
 namespace Opm {

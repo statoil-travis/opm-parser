@@ -22,54 +22,17 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class SgfnTable : public SimpleTable {
 
-        friend class TableManager;
-
-        /*!
-         * \brief Read the SGFN keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{"SG", "KRG", "PCOG"});
-
-            SimpleTable::checkNonDefaultable("SG");
-            SimpleTable::checkMonotonic("SG",   /*isAscending=*/true);
-            SimpleTable::applyDefaultsLinear("KRG");
-            SimpleTable::applyDefaultsLinear("PCOG");
-            SimpleTable::checkMonotonic("KRG",  /*isAscending=*/true,  /*strict=*/false);
-            SimpleTable::checkMonotonic("PCOG", /*isAscending=*/true, /*strict=*/false);
-        }
-
     public:
-        SgfnTable() = default;
+        SgfnTable( std::shared_ptr< const DeckItem > item );
 
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckItemConstPtr item)
-        { init(item); }
-#endif
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getSgColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getKrgColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        // this column is p_g - p_o (non-wetting phase pressure minus
-        // wetting phase pressure for a given gas saturation)
-        const std::vector<double> &getPcogColumn() const
-        { return SimpleTable::getColumn(2); }
+        const TableColumn& getSgColumn() const;
+        const TableColumn& getKrgColumn() const;
+        const TableColumn& getPcogColumn() const;
     };
 }
 

@@ -7,6 +7,8 @@
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 #include <opm/parser/eclipse/Deck/DeckDoubleItem.hpp>
 
 #include <opm/parser/eclipse/Parser/Parser.hpp>
@@ -51,8 +53,7 @@ static void check_parser(ParserPtr parser) {
 
 static void check_SlgofTable(ParserPtr parser) {
     DeckPtr deck =  parser->parseString(parserData, ParseMode());
-    Opm::SlgofTable slgofTable;
-    slgofTable.initFORUNITTESTONLY(deck->getKeyword("SLGOF")->getRecord(0)->getItem(0));
+    Opm::SlgofTable slgofTable(deck->getKeyword("SLGOF")->getRecord(0)->getItem(0));
 
     BOOST_CHECK_EQUAL(10U, slgofTable.getSlColumn().size());
     BOOST_CHECK_EQUAL(0.1, slgofTable.getSlColumn()[0]);

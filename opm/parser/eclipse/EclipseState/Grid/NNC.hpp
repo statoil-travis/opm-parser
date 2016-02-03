@@ -20,28 +20,35 @@
 #ifndef NNC_HPP
 #define NNC_HPP
 
-#include <opm/parser/eclipse/Deck/Deck.hpp>
-#include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
+#include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace Opm
 {
+    class Deck;
+    class EclipseGrid;
+
+struct NNCdata {
+    size_t cell1;
+    size_t cell2;
+    double trans;
+};
+
 class NNC
 {
 public:
     /// Construct from input deck.
-    NNC(Opm::DeckConstPtr deck, EclipseGridConstPtr eclipseGrid);
-    void addNNC(const size_t NNC1, const size_t NNC2, const double trans);
-    const std::vector<size_t>& nnc1() const { return m_nnc1; }
-    const std::vector<size_t>& nnc2() const { return m_nnc2; }
-    const std::vector<double>& trans() const { return m_trans; }
+    NNC();
+    NNC(std::shared_ptr< const Deck > deck, std::shared_ptr< const EclipseGrid > eclipseGrid);
+    void addNNC(const size_t cell1, const size_t cell2, const double trans);
+    const std::vector<NNCdata>& nncdata() const { return m_nnc; }
     size_t numNNC() const;
     bool hasNNC() const;
 
 private:
-    std::vector<size_t> m_nnc1;
-    std::vector<size_t> m_nnc2;
-    std::vector<double> m_trans;
+
+    std::vector<NNCdata> m_nnc;
 };
 
 

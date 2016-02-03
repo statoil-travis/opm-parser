@@ -22,56 +22,20 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class SgwfnTable : public SimpleTable {
 
-        friend class TableManager;
-
-        /*!
-         * \brief Read the SGWFN keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{"SG", "KRG", "KRGW", "PCGW"});
-
-            SimpleTable::checkNonDefaultable("SG");
-            SimpleTable::checkMonotonic("SG", /*isAscending=*/true);
-            SimpleTable::applyDefaultsLinear("KRG");
-            SimpleTable::applyDefaultsLinear("KRGW");
-            SimpleTable::applyDefaultsLinear("PCGW");
-        }
-
     public:
-        SgwfnTable() = default;
-
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckItemConstPtr item)
-        { init(item); }
-#endif
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getSgColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getKrgColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        const std::vector<double> &getKrgwColumn() const
-        { return SimpleTable::getColumn(2); }
+        SgwfnTable( std::shared_ptr< const DeckItem > item );
+        const TableColumn& getSgColumn() const;
+        const TableColumn& getKrgColumn() const;
+        const TableColumn& getKrgwColumn() const;
 
         // this column is p_g - p_w (non-wetting phase pressure minus
         // wetting phase pressure for a given water saturation)
-        const std::vector<double> &getPcgwColumn() const
-        { return SimpleTable::getColumn(3); }
+        const TableColumn& getPcgwColumn() const;
     };
 }
 

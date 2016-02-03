@@ -20,56 +20,33 @@
 #ifndef OPM_TABLE_MANAGER_HPP
 #define OPM_TABLE_MANAGER_HPP
 
-#include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 
-#include <opm/parser/eclipse/EclipseState/Tables/Tabdims.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/Eqldims.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/Regdims.hpp>
-
-#include <opm/parser/eclipse/EclipseState/Tables/SwofTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SgwfnTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SgofTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SlgofTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/Sof2Table.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/Sof3Table.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PvdgTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PvdoTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SwfnTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SgfnTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/SsfnTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PvdsTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlyadsTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlymaxTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlyrockTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlyviscTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlydhflfTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/PlyshlogTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/OilvisctTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/WatvisctTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/GasvisctTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/RtempvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/RocktabTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/RsvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/RvvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/EnkrvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/EnptvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/ImkrvdTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/ImptvdTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/PvtgTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/PvtoTable.hpp>
+
 #include <opm/parser/eclipse/EclipseState/Tables/VFPProdTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/VFPInjTable.hpp>
-#include <opm/parser/eclipse/EclipseState/Tables/TableContainer.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/SorwmisTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/SgcwmisTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/MiscTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/PmiscTable.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/MsfnTable.hpp>
 
+#include <opm/parser/eclipse/EclipseState/Tables/TableContainer.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/VFPInjTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/VFPProdTable.hpp>
 
-
+#include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
+#include <opm/parser/eclipse/OpmLog/LogUtil.hpp>
 
 namespace Opm {
+
+    class Tabdims;
+    class Eqldims;
+    class Regdims;
 
     class TableManager {
     public:
@@ -166,8 +143,7 @@ namespace Opm {
                 const auto tableRecord = tableKeyword->getRecord( tableIdx );
                 const auto dataItem = tableRecord->getItem( 0 );
                 if (dataItem->size() > 0) {
-                    std::shared_ptr<TableType> table = std::make_shared<TableType>();
-                    table->init(dataItem);
+                    std::shared_ptr<TableType> table = std::make_shared<TableType>( dataItem );
                     container.addTable( tableIdx , table );
                 }
             }
@@ -229,11 +205,9 @@ namespace Opm {
 
             const auto& tableKeyword = deck.getKeyword(keywordName);
 
-            int numTables = TableType::numTables(tableKeyword);
-            for (int tableIdx = 0; tableIdx < numTables; ++tableIdx) {
-                tableVector.push_back(TableType());
-                tableVector[tableIdx].init(tableKeyword, tableIdx);
-            }
+            int numTables = TableType::numTables( tableKeyword );
+            for (int tableIdx = 0; tableIdx < numTables; ++tableIdx)
+                tableVector.push_back(TableType(tableKeyword , tableIdx));
         }
 
         std::map<std::string , TableContainer> m_simpleTables;

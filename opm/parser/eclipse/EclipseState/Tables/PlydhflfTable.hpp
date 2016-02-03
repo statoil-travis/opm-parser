@@ -22,43 +22,16 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class PlydhflfTable : public SimpleTable {
     public:
 
-        friend class TableManager;
-        PlydhflfTable() = default;
+        PlydhflfTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the PLYDHFLF keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{
-                                 "Temperature",
-                                 "PolymerHalflife"
-                                     });
-
-            SimpleTable::checkNonDefaultable("Temperetura");
-            SimpleTable::checkMonotonic("Temperature", /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("PolymerHalflife");
-            SimpleTable::checkMonotonic("PolymerHalflife", /*isAscending=*/false);
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getTemperatureColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getPolymerHalflifeColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getTemperatureColumn() const;
+        const TableColumn& getPolymerHalflifeColumn() const;
     };
 }
 

@@ -23,50 +23,17 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class PmiscTable : public SimpleTable {
     public:
 
-        friend class TableManager;
-        PmiscTable() = default;
+        PmiscTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the PMISC keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{
-                                 "OilPhasePressure",
-                                 "Miscibility"
-                                     });
+        const TableColumn& getOilPhasePressureColumn() const;
+        const TableColumn& getMiscibilityColumn() const;
 
-            SimpleTable::checkNonDefaultable("OilPhasePressure");
-            SimpleTable::checkMonotonic("OilPhasePressure", /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("Miscibility");
-            SimpleTable::checkMonotonic("Miscibility", /*isAscending=*/true, /*isStriclyMonotonic=*/false);
-            SimpleTable::assertUnitRange("Miscibility");
-        }
-
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckItemConstPtr item)
-        { init(item); }
-#endif
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getOilPhasePressureColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getMiscibilityColumn() const
-        { return SimpleTable::getColumn(1); }
     };
 }
 

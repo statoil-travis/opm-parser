@@ -5,6 +5,8 @@
 #include <boost/test/test_tools.hpp>
 
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
 #include <opm/parser/eclipse/Deck/DeckDoubleItem.hpp>
 
 #include <opm/parser/eclipse/Parser/Parser.hpp>
@@ -49,8 +51,7 @@ static void check_parser(ParserPtr parser) {
 
 static void check_SgofTable(ParserPtr parser) {
     DeckPtr deck =  parser->parseString(parserData, ParseMode());
-    Opm::SgofTable sgofTable;
-    sgofTable.initFORUNITTESTONLY(deck->getKeyword("SGOF")->getRecord(0)->getItem(0));
+    Opm::SgofTable sgofTable(deck->getKeyword("SGOF")->getRecord(0)->getItem(0));
 
     BOOST_CHECK_EQUAL(10U, sgofTable.getSgColumn().size());
     BOOST_CHECK_EQUAL(0.1, sgofTable.getSgColumn()[0]);

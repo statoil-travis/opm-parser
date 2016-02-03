@@ -60,8 +60,7 @@ Parser/ParserItem.cpp
 Parser/ParserIntItem.cpp  
 Parser/ParserFloatItem.cpp
 Parser/ParserDoubleItem.cpp
-Parser/ParserStringItem.cpp  
-${PROJECT_BINARY_DIR}/generated-source/ParserKeywords.cpp
+Parser/ParserStringItem.cpp
 )
 
 set( generator_source
@@ -108,11 +107,16 @@ EclipseState/Schedule/Tuning.cpp
 EclipseState/Schedule/Events.cpp
 #
 EclipseState/Tables/SimpleTable.cpp
-EclipseState/Tables/MultiRecordTable.cpp
 EclipseState/Tables/VFPProdTable.cpp
 EclipseState/Tables/VFPInjTable.cpp
 EclipseState/Tables/TableManager.cpp
 EclipseState/Tables/TableContainer.cpp
+EclipseState/Tables/TableColumn.cpp
+EclipseState/Tables/ColumnSchema.cpp
+EclipseState/Tables/TableSchema.cpp
+EclipseState/Tables/TableIndex.cpp
+EclipseState/Tables/PvtxTable.cpp
+EclipseState/Tables/Tables.cpp
 #
 EclipseState/Grid/GridProperty.cpp
 EclipseState/Grid/Box.cpp
@@ -235,16 +239,13 @@ EclipseState/Tables/Tabdims.hpp
 EclipseState/Tables/Eqldims.hpp
 EclipseState/Tables/Regdims.hpp
 EclipseState/Tables/PlyadsTable.hpp
-EclipseState/Tables/PvtoOuterTable.hpp
+EclipseState/Tables/PvtoTable.hpp
 EclipseState/Tables/RocktabTable.hpp
-EclipseState/Tables/PvtgInnerTable.hpp
 EclipseState/Tables/PvdoTable.hpp
-EclipseState/Tables/MultiRecordTable.hpp
 EclipseState/Tables/PvdgTable.hpp
 EclipseState/Tables/PvdsTable.hpp
 EclipseState/Tables/SimpleTable.hpp
 EclipseState/Tables/PlymaxTable.hpp
-EclipseState/Tables/PvtgTable.hpp
 EclipseState/Tables/PlyrockTable.hpp
 EclipseState/Tables/SwofTable.hpp
 EclipseState/Tables/SgwfnTable.hpp
@@ -254,7 +255,6 @@ EclipseState/Tables/SsfnTable.hpp
 EclipseState/Tables/Sof2Table.hpp
 EclipseState/Tables/Sof3Table.hpp
 EclipseState/Tables/EnptvdTable.hpp
-EclipseState/Tables/FullTable.hpp
 EclipseState/Tables/PlyviscTable.hpp
 EclipseState/Tables/PlydhflfTable.hpp
 EclipseState/Tables/PlyshlogTable.hpp
@@ -262,16 +262,15 @@ EclipseState/Tables/EnkrvdTable.hpp
 EclipseState/Tables/ImkrvdTable.hpp
 EclipseState/Tables/SgofTable.hpp
 EclipseState/Tables/SlgofTable.hpp
-EclipseState/Tables/PvtoTable.hpp
+EclipseState/Tables/PvtxTable.hpp
 EclipseState/Tables/ImptvdTable.hpp
 EclipseState/Tables/RsvdTable.hpp
-EclipseState/Tables/PvtoInnerTable.hpp
 EclipseState/Tables/RvvdTable.hpp
 EclipseState/Tables/RtempvdTable.hpp
 EclipseState/Tables/OilvisctTable.hpp
 EclipseState/Tables/GasvisctTable.hpp
 EclipseState/Tables/WatvisctTable.hpp
-EclipseState/Tables/PvtgOuterTable.hpp
+EclipseState/Tables/PvtgTable.hpp
 EclipseState/Tables/VFPProdTable.hpp
 EclipseState/Tables/VFPInjTable.hpp
 EclipseState/Tables/TableManager.hpp
@@ -281,6 +280,11 @@ EclipseState/Tables/SgcwmisTable.hpp
 EclipseState/Tables/MiscTable.hpp
 EclipseState/Tables/PmiscTable.hpp
 EclipseState/Tables/MsfnTable.hpp
+EclipseState/Tables/TableColumn.hpp
+EclipseState/Tables/ColumnSchema.hpp
+EclipseState/Tables/TableEnums.hpp
+EclipseState/Tables/TableSchema.hpp
+EclipseState/Tables/TableIndex.hpp
 #
 Utility/WconinjeWrapper.hpp
 Utility/CompdatWrapper.hpp
@@ -299,7 +303,7 @@ Utility/EquilWrapper.hpp
 Utility/EndscaleWrapper.hpp
 Utility/ScalecrsWrapper.hpp)
 
-add_library(buildParser STATIC ${rawdeck_source} ${build_parser_source} ${deck_source} ${unit_source} ${generator_source})
+add_library(buildParser ${rawdeck_source} ${build_parser_source} ${deck_source} ${unit_source} ${generator_source})
 target_link_libraries(buildParser opmjson ${Boost_LIBRARIES}  ${ERT_LIBRARIES})
 
 #-----------------------------------------------------------------
@@ -320,15 +324,29 @@ target_link_libraries( createDefaultKeywordList buildParser opmjson ${Boost_LIBR
 #    This target will always run - the dependency "management" is
 #    implicitly handled in the createDefaultKeywordList application.
 
-add_custom_target( generatedCode ALL COMMAND createDefaultKeywordList 
-                   ${PROJECT_SOURCE_DIR}/opm/parser/share/keywords 
-                   ${PROJECT_BINARY_DIR}/generated-source/ParserKeywords.cpp 
-                   ${PROJECT_BINARY_DIR}/generated-source/include/opm/parser/eclipse/Parser/ParserKeywords.hpp
-                   ${PROJECT_BINARY_DIR}/generated-source/inlineKeywordTest.cpp )
+set( generated_source ${PROJECT_BINARY_DIR}/generated-source/ParserKeywords.cpp)
+# to tune the number of files addDefaultKeywords is split into, change
+# generated_num_files. 4 is a very reasonable estimate.
+# TODO: support from command line options?
+set( generated_num_files 4 )
+math( EXPR generated_num_files_end "${generated_num_files} - 1" )
+foreach( n RANGE ${generated_num_files_end} )
+    list(APPEND generated_source ${PROJECT_BINARY_DIR}/generated-source/ParserKeywords${n}.cpp)
+    set_source_files_properties(${PROJECT_BINARY_DIR}/generated-source/ParserKeywords${n}.cpp PROPERTIES GENERATED TRUE)
+endforeach( n )
 
 set_source_files_properties(${PROJECT_BINARY_DIR}/generated-source/ParserKeywords.cpp PROPERTIES GENERATED TRUE)
 set_source_files_properties(${PROJECT_BINARY_DIR}/generated-source/inlcude/opm/parser/eclipse/Parser/ParserKeywords.hpp PROPERTIES GENERATED TRUE)
 set_source_files_properties(${PROJECT_BINARY_DIR}/generated-source/inlineKeywordTest.cpp PROPERTIES GENERATED TRUE)
+
+add_custom_target( generatedCode ALL COMMAND createDefaultKeywordList
+                   ${PROJECT_SOURCE_DIR}/opm/parser/share/keywords
+                   ${PROJECT_BINARY_DIR}/generated-source/ParserKeywords.cpp
+                   ${PROJECT_BINARY_DIR}/generated-source/include/
+                   opm/parser/eclipse/Parser/ParserKeywords
+                   ${PROJECT_BINARY_DIR}/generated-source/inlineKeywordTest.cpp
+                   ${generated_num_files}
+                )
 
 opm_add_test( runInlineKeywordTest SOURCES ${PROJECT_BINARY_DIR}/generated-source/inlineKeywordTest.cpp
               LIBRARIES opmparser ${Boost_LIBRARIES}
@@ -336,7 +354,7 @@ opm_add_test( runInlineKeywordTest SOURCES ${PROJECT_BINARY_DIR}/generated-sourc
 
 #-----------------------------------------------------------------
 
-add_library(opmparser ${rawdeck_source} ${parser_source} ${deck_source} ${state_source} ${unit_source} ${log_source} ${generator_source})
+add_library(opmparser ${generated_source} ${state_source} ${rawdeck_source} ${parser_source} ${deck_source} ${unit_source} ${log_source} ${generator_source})
 add_dependencies( opmparser generatedCode )
 target_link_libraries(opmparser opmjson ${Boost_LIBRARIES}  ${ERT_LIBRARIES})
 set_target_properties(opmparser PROPERTIES VERSION ${opm-parser_VERSION_MAJOR}.${opm-parser_VERSION_MINOR}
@@ -345,4 +363,12 @@ set_target_properties(opmparser PROPERTIES VERSION ${opm-parser_VERSION_MAJOR}.$
 include( ${PROJECT_SOURCE_DIR}/cmake/Modules/install_headers.cmake )   
 install_headers( "${HEADER_FILES}" "${CMAKE_INSTALL_PREFIX}" )
 install( TARGETS opmparser DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-install( FILES ${PROJECT_BINARY_DIR}/generated-source/include/opm/parser/eclipse/Parser/ParserKeywords.hpp DESTINATION "include/opm/parser/eclipse/Parser")
+
+install(FILES ${PROJECT_BINARY_DIR}/generated-source/include/opm/parser/eclipse/Parser/ParserKeywords.hpp
+        DESTINATION include/opm/parser/eclipse/Parser)
+install(DIRECTORY ${PROJECT_BINARY_DIR}/generated-source/include/opm/parser/eclipse/Parser/ParserKeywords
+        DESTINATION include/opm/parser/eclipse/Parser)
+
+if (ENABLE_PYTHON)
+   add_subdirectory( python )
+endif()

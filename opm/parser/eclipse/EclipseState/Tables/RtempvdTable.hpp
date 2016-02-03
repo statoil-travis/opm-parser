@@ -22,42 +22,15 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class RtempvdTable : public SimpleTable {
     public:
-        friend class TableManager;
-        RtempvdTable() = default;
+        RtempvdTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the RTEMPVD keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{
-                                  "Depth",
-                                      "Temperature"});
-
-
-            SimpleTable::checkNonDefaultable("Depth");
-            SimpleTable::checkMonotonic("Depth", /*isAscending=*/true);
-
-            SimpleTable::checkNonDefaultable("Temperature");
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getDepthColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getTemperatureColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getDepthColumn() const;
+        const TableColumn& getTemperatureColumn() const;
     };
 }
 

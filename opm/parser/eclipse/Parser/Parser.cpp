@@ -17,24 +17,36 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <fstream>
 #include <memory>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
+
+#include <opm/json/JsonObject.hpp>
+
+#include <opm/parser/eclipse/OpmLog/LogUtil.hpp>
 #include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
 
-#include <opm/parser/eclipse/Parser/ParseMode.hpp>
-#include <opm/parser/eclipse/Parser/ParserIntItem.hpp>
-#include <opm/parser/eclipse/Parser/Parser.hpp>
-#include <opm/parser/eclipse/Parser/ParserKeyword.hpp>
-#include <opm/parser/eclipse/RawDeck/RawConsts.hpp>
-#include <opm/parser/eclipse/RawDeck/RawEnums.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/Deck/DeckIntItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/Parser/ParseMode.hpp>
+#include <opm/parser/eclipse/Parser/Parser.hpp>
+#include <opm/parser/eclipse/Parser/ParserIntItem.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeyword.hpp>
+#include <opm/parser/eclipse/Parser/ParserRecord.hpp>
+#include <opm/parser/eclipse/RawDeck/RawConsts.hpp>
+#include <opm/parser/eclipse/RawDeck/RawEnums.hpp>
+#include <opm/parser/eclipse/RawDeck/RawKeyword.hpp>
 
 namespace Opm {
 
+
     struct ParserState {
         const ParseMode& parseMode;
-        DeckPtr deck;
+        Deck * deck;
         boost::filesystem::path dataFile;
         boost::filesystem::path rootPath;
         std::map<std::string, std::string> pathMap;
@@ -55,7 +67,7 @@ namespace Opm {
         ParserState(const ParseMode& __parseMode)
             : parseMode( __parseMode )
         {
-            deck = std::make_shared<Deck>();
+            deck = new Deck();
             lineNR = 0;
         }
 
@@ -125,6 +137,30 @@ namespace Opm {
 
     };
 
+    static boost::filesystem::path getIncludeFilePath(ParserState& parserState, std::string path)
+    {
+        const std::string pathKeywordPrefix("$");
+        const std::string validPathNameCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
+
+        size_t positionOfPathName = path.find(pathKeywordPrefix);
+
+        if ( positionOfPathName != std::string::npos) {
+            std::string stringStartingAtPathName = path.substr(positionOfPathName+1);
+            size_t cutOffPosition = stringStartingAtPathName.find_first_not_of(validPathNameCharacters);
+            std::string stringToFind = stringStartingAtPathName.substr(0, cutOffPosition);
+            std::string stringToReplace = parserState.pathMap[stringToFind];
+            boost::replace_all(path, pathKeywordPrefix + stringToFind, stringToReplace);
+        }
+
+        boost::filesystem::path includeFilePath(path);
+
+        if (includeFilePath.is_relative())
+            includeFilePath = parserState.rootPath / includeFilePath;
+
+        return includeFilePath;
+    }
+
+
     Parser::Parser(bool addDefault) {
         if (addDefault)
             addDefaultKeywords();
@@ -180,24 +216,32 @@ namespace Opm {
      is retained in the current implementation.
      */
 
-    DeckPtr Parser::parseFile(const std::string &dataFileName, const ParseMode& parseMode) const {
+    Deck * Parser::newDeckFromFile(const std::string &dataFileName, const ParseMode& parseMode) const {
         std::shared_ptr<ParserState> parserState = std::make_shared<ParserState>(parseMode);
         parserState->openRootFile( dataFileName );
-
         parseState(parserState);
-        applyUnitsToDeck(parserState->deck);
+        applyUnitsToDeck(*parserState->deck);
 
         return parserState->deck;
     }
 
-    DeckPtr Parser::parseString(const std::string &data, const ParseMode& parseMode) const {
+    Deck * Parser::newDeckFromString(const std::string &data, const ParseMode& parseMode) const {
         std::shared_ptr<ParserState> parserState = std::make_shared<ParserState>(parseMode);
         parserState->openString( data );
 
         parseState(parserState);
-        applyUnitsToDeck(parserState->deck);
+        applyUnitsToDeck(*parserState->deck);
 
         return parserState->deck;
+    }
+
+
+    DeckPtr Parser::parseFile(const std::string &dataFileName, const ParseMode& parseMode) const {
+        return std::shared_ptr<Deck>( newDeckFromFile( dataFileName , parseMode));
+    }
+
+    DeckPtr Parser::parseString(const std::string &data, const ParseMode& parseMode) const {
+        return std::shared_ptr<Deck>( newDeckFromString( data , parseMode));
     }
 
     DeckPtr Parser::parseStream(std::shared_ptr<std::istream> inputStream, const ParseMode& parseMode) const {
@@ -205,9 +249,9 @@ namespace Opm {
         parserState->openStream( inputStream );
 
         parseState(parserState);
-        applyUnitsToDeck(parserState->deck);
+        applyUnitsToDeck(*parserState->deck);
 
-        return parserState->deck;
+        return std::shared_ptr<Deck>( parserState->deck );
     }
 
     size_t Parser::size() const {
@@ -258,6 +302,12 @@ namespace Opm {
 
         if (parserKeyword->hasMatchRegex())
             m_wildCardKeywords[parserKeyword->getName()] = parserKeyword;
+    }
+
+
+    void Parser::addParserKeyword(const Json::JsonObject& jsonKeyword) {
+        ParserKeywordConstPtr parserKeyword = std::make_shared<const ParserKeyword>(jsonKeyword);
+        addParserKeyword(parserKeyword);
     }
 
 
@@ -317,30 +367,6 @@ namespace Opm {
         return keywords;
     }
 
-
-    boost::filesystem::path Parser::getIncludeFilePath(std::shared_ptr<ParserState> parserState, std::string path) const
-    {
-        const std::string pathKeywordPrefix("$");
-        const std::string validPathNameCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
-
-        size_t positionOfPathName = path.find(pathKeywordPrefix);
-
-        if ( positionOfPathName != std::string::npos) {
-            std::string stringStartingAtPathName = path.substr(positionOfPathName+1);
-            size_t cutOffPosition = stringStartingAtPathName.find_first_not_of(validPathNameCharacters);
-            std::string stringToFind = stringStartingAtPathName.substr(0, cutOffPosition);
-            std::string stringToReplace = parserState->pathMap[stringToFind];
-            boost::replace_all(path, pathKeywordPrefix + stringToFind, stringToReplace);
-        }
-
-        boost::filesystem::path includeFilePath(path);
-
-        if (includeFilePath.is_relative())
-            includeFilePath = parserState->rootPath / includeFilePath;
-
-        return includeFilePath;
-    }
-
     bool Parser::parseState(std::shared_ptr<ParserState> parserState) const {
         bool stopParsing = false;
 
@@ -366,7 +392,7 @@ namespace Opm {
                     else if (parserState->rawKeyword->getKeywordName() == Opm::RawConsts::include) {
                         RawRecordConstPtr firstRecord = parserState->rawKeyword->getRecord(0);
                         std::string includeFileAsString = readValueToken<std::string>(firstRecord->getItem(0));
-                        boost::filesystem::path includeFile = getIncludeFilePath(parserState, includeFileAsString);
+                        boost::filesystem::path includeFile = getIncludeFilePath(*parserState, includeFileAsString);
                         std::shared_ptr<ParserState> newParserState = parserState->includeState( includeFile );
 
 
@@ -432,7 +458,7 @@ namespace Opm {
                     targetSize = parserKeyword->getFixedSize();
                 else {
                     const std::pair<std::string, std::string> sizeKeyword = parserKeyword->getSizeDefinitionPair();
-                    DeckConstPtr deck = parserState->deck;
+                    const Deck * deck = parserState->deck;
                     if (deck->hasKeyword(sizeKeyword.first)) {
                         DeckKeywordConstPtr sizeDefinitionKeyword = deck->getKeyword(sizeKeyword.first);
                         DeckItemPtr sizeDefinitionItem;
@@ -569,10 +595,10 @@ namespace Opm {
     }
 
 
-    void Parser::applyUnitsToDeck(DeckPtr deck) const {
-        deck->initUnitSystem();
-        for (size_t index=0; index < deck->size(); ++index) {
-            DeckKeywordConstPtr deckKeyword = deck->getKeyword( index );
+    void Parser::applyUnitsToDeck(Deck& deck) const {
+        deck.initUnitSystem();
+        for (size_t index=0; index < deck.size(); ++index) {
+            DeckKeywordConstPtr deckKeyword = deck.getKeyword( index );
             if (isRecognizedKeyword( deckKeyword->name())) {
                 ParserKeywordConstPtr parserKeyword = getParserKeywordFromDeckName( deckKeyword->name() );
                 if (parserKeyword->hasDimension()) {

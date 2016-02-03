@@ -22,19 +22,14 @@
 #include <cstddef>
 #include <string>
 #include <memory>
-#include <map>
-
 
 #include <opm/parser/eclipse/EclipseState/Util/OrderedMap.hpp>
 
-#include <opm/parser/eclipse/Deck/Deck.hpp>
-
-#include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
-#include <opm/parser/eclipse/EclipseState/Grid/Fault.hpp>
-#include <opm/parser/eclipse/EclipseState/Grid/FaultFace.hpp>
-#include <opm/parser/eclipse/EclipseState/Grid/FaceDir.hpp>
-
 namespace Opm {
+
+    class Deck;
+    class EclipseGrid;
+    class Fault;
 
 
 class FaultCollection {
@@ -44,8 +39,10 @@ public:
 
     size_t size() const;
     bool hasFault(const std::string& faultName) const;
-    std::shared_ptr<Fault>  getFault(const std::string& faultName) const;
-    std::shared_ptr<Fault>  getFault(size_t faultIndex) const;
+    std::shared_ptr<Fault>  getFault(const std::string& faultName);
+    std::shared_ptr<const Fault>  getFault(const std::string& faultName) const;
+    std::shared_ptr<Fault>  getFault(size_t faultIndex);
+    std::shared_ptr<const Fault>  getFault(size_t faultIndex) const;
     void addFault(std::shared_ptr<Fault> fault);
     void setTransMult(const std::string& faultName , double transMult);
 

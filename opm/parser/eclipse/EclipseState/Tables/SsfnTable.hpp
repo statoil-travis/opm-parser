@@ -22,47 +22,17 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class SsfnTable : public SimpleTable {
-    public:
-        friend class TableManager;
-        SsfnTable() = default;
+        public:
+            friend class TableManager;
+            SsfnTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the SSFN keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{
-                                  "SolventFraction",
-                                      "GasRelPermMultiplier",
-                                      "SolventRelPermMultiplier"});
-
-            SimpleTable::checkNonDefaultable("SolventFraction");
-            SimpleTable::checkMonotonic("SolventFraction",   /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("GasRelPermMultiplier");
-            SimpleTable::checkMonotonic("GasRelPermMultiplier",  /*isAscending=*/true);
-            SimpleTable::checkNonDefaultable("SolventRelPermMultiplier");
-            SimpleTable::checkMonotonic("SolventRelPermMultiplier", /*isAscending=*/true);
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getSolventFractionColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getGasRelPermMultiplierColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        const std::vector<double> &getSolventRelPermMultiplierColumn() const
-        { return SimpleTable::getColumn(2); }
+            const TableColumn& getSolventFractionColumn() const;
+            const TableColumn& getGasRelPermMultiplierColumn() const;
+            const TableColumn& getSolventRelPermMultiplierColumn() const;
     };
 }
 

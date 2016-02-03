@@ -22,46 +22,14 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class EnkrvdTable : public SimpleTable {
     public:
 
-        friend class TableManager;
-        EnkrvdTable() = default;
+        EnkrvdTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the ENKRVD keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{"DEPTH",
-                                     "KRWMAX",
-                                     "KRGMAX",
-                                     "KROMAX",
-                                     "KRWCRIT",
-                                     "KRGCRIT",
-                                     "KROCRITG",
-                                      "KROCRITW" });
-
-            SimpleTable::checkNonDefaultable("DEPTH");
-            SimpleTable::checkMonotonic("DEPTH", /*isAscending=*/true);
-            SimpleTable::applyDefaultsLinear("KRWMAX");
-            SimpleTable::applyDefaultsLinear("KRGMAX");
-            SimpleTable::applyDefaultsLinear("KROMAX");
-            SimpleTable::applyDefaultsLinear("KRWCRIT");
-            SimpleTable::applyDefaultsLinear("KRGCRIT");
-            SimpleTable::applyDefaultsLinear("KROCRITG");
-            SimpleTable::applyDefaultsLinear("KROCRITW");
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
 
         // using this method is strongly discouraged but the current endpoint scaling
         // code makes it hard to avoid
@@ -70,50 +38,42 @@ namespace Opm {
         /*!
          * \brief The datum depth for the remaining columns
          */
-        const std::vector<double> &getDepthColumn() const
-        { return SimpleTable::getColumn(0); }
+        const TableColumn& getDepthColumn() const;
 
         /*!
          * \brief Maximum relative permeability of water
          */
-        const std::vector<double> &getKrwmaxColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getKrwmaxColumn() const;
 
         /*!
          * \brief Maximum relative permeability of gas
          */
-        const std::vector<double> &getKrgmaxColumn() const
-        { return SimpleTable::getColumn(2); }
+        const TableColumn& getKrgmaxColumn() const;
 
         /*!
          * \brief Maximum relative permeability of oil
          */
-        const std::vector<double> &getKromaxColumn() const
-        { return SimpleTable::getColumn(3); }
+        const TableColumn& getKromaxColumn() const;
 
         /*!
          * \brief Relative permeability of water at the critical oil (or gas) saturation
          */
-        const std::vector<double> &getKrwcritColumn() const
-        { return SimpleTable::getColumn(4); }
+        const TableColumn& getKrwcritColumn() const;
 
         /*!
          * \brief Relative permeability of gas at the critical oil (or water) saturation
          */
-        const std::vector<double> &getKrgcritColumn() const
-        { return SimpleTable::getColumn(5); }
+        const TableColumn& getKrgcritColumn() const;
 
         /*!
          * \brief Oil relative permeability of oil at the critical gas saturation
          */
-        const std::vector<double> &getKrocritgColumn() const
-        { return SimpleTable::getColumn(6); }
+        const TableColumn& getKrocritgColumn() const;
 
         /*!
          * \brief Oil relative permeability of oil at the critical water saturation
          */
-        const std::vector<double> &getKrocritwColumn() const
-        { return SimpleTable::getColumn(7); }
+        const TableColumn& getKrocritwColumn() const;
     };
 }
 

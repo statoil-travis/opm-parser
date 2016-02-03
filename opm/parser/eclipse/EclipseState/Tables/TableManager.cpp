@@ -17,10 +17,58 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <opm/parser/eclipse/Parser/ParserKeywords.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/E.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/M.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/V.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/T.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 #include <opm/parser/eclipse/EclipseState/Tables/TableManager.hpp>
 #include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/E.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/M.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/P.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/T.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/V.hpp>
+
+#include <opm/parser/eclipse/EclipseState/Tables/EnkrvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/EnptvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/GasvisctTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/ImkrvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/ImptvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/MiscTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/MsfnTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/OilvisctTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlyadsTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlydhflfTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlymaxTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlyrockTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlyshlogTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PlyviscTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PmiscTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PvdgTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PvdoTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/PvdsTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/RocktabTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/RsvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/RtempvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/RvvdTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SgcwmisTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SgfnTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SgofTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SgwfnTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SlgofTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/Sof2Table.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/Sof3Table.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SorwmisTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SsfnTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SwfnTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/SwofTable.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/TableContainer.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/WatvisctTable.hpp>
+
+#include <opm/parser/eclipse/EclipseState/Tables/Tabdims.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/Eqldims.hpp>
+#include <opm/parser/eclipse/EclipseState/Tables/Regdims.hpp>
 
 namespace Opm {
 
@@ -156,8 +204,6 @@ namespace Opm {
             addTables( "SGCWMIS", numMiscibleTables);
             addTables( "MISC", numMiscibleTables);
             addTables( "PMISC", numMiscibleTables);
-
-
         }
 
         {
@@ -280,8 +326,7 @@ namespace Opm {
             const auto tableRecord = tableKeyword->getRecord( tableIdx );
             const auto dataItem = tableRecord->getItem( 0 );
             if (dataItem->size() > 0) {
-                std::shared_ptr<GasvisctTable> table = std::make_shared<GasvisctTable>();
-                table->init(deck , dataItem );
+                std::shared_ptr<GasvisctTable> table = std::make_shared<GasvisctTable>( deck , dataItem );
                 container.addTable( tableIdx , table );
             }
         }
@@ -313,8 +358,7 @@ namespace Opm {
             const auto dataRecord = tableKeyword->getRecord( tableIdx + 1);
             const auto dataItem = dataRecord->getItem( 0 );
             if (dataItem->size() > 0) {
-                std::shared_ptr<PlyshlogTable> table = std::make_shared<PlyshlogTable>();
-                table->init(indexRecord , dataRecord);
+                std::shared_ptr<PlyshlogTable> table = std::make_shared<PlyshlogTable>(indexRecord , dataRecord);
                 container.addTable( tableIdx , table );
             }
         }
@@ -337,8 +381,7 @@ namespace Opm {
         auto& container = forceGetTables(keywordName , numTables);
         for (size_t tableIdx = 0; tableIdx < keyword->size(); ++tableIdx) {
             const auto tableRecord = keyword->getRecord( tableIdx );
-            std::shared_ptr<PlyrockTable> table = std::make_shared<PlyrockTable>();
-            table->init( tableRecord );
+            std::shared_ptr<PlyrockTable> table = std::make_shared<PlyrockTable>(tableRecord);
             container.addTable( tableIdx , table );
         }
     }
@@ -360,8 +403,7 @@ namespace Opm {
         auto& container = forceGetTables(keywordName , numTables);
         for (size_t tableIdx = 0; tableIdx < keyword->size(); ++tableIdx) {
             const auto tableRecord = keyword->getRecord( tableIdx );
-            std::shared_ptr<PlymaxTable> table = std::make_shared<PlymaxTable>();
-            table->init( tableRecord );
+            std::shared_ptr<PlymaxTable> table = std::make_shared<PlymaxTable>( tableRecord );
             container.addTable( tableIdx , table );
         }
     }
@@ -395,8 +437,7 @@ namespace Opm {
             const auto tableRecord = rocktabKeyword->getRecord( tableIdx );
             const auto dataItem = tableRecord->getItem( 0 );
             if (dataItem->size() > 0) {
-                std::shared_ptr<RocktabTable> table = std::make_shared<RocktabTable>();
-                table->init(dataItem , isDirectional, useStressOption);
+                std::shared_ptr<RocktabTable> table = std::make_shared<RocktabTable>( dataItem , isDirectional, useStressOption );
                 container.addTable( tableIdx , table );
             }
         }
@@ -474,7 +515,7 @@ namespace Opm {
     const TableContainer& TableManager::getSgwfnTables() const {
         return getTables("SGWFN");
     }
-    
+
     const TableContainer& TableManager::getSlgofTables() const {
         return getTables("SLGOF");
     }
@@ -589,7 +630,6 @@ namespace Opm {
     const std::vector<PvtgTable>& TableManager::getPvtgTables() const {
         return m_pvtgTables;
     }
-
 
     const std::vector<PvtoTable>& TableManager::getPvtoTables() const {
         return m_pvtoTables;

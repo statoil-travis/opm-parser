@@ -31,18 +31,21 @@
 
 #include <opm/parser/eclipse/Parser/ParserEnums.hpp>
 #include <opm/parser/eclipse/Units/ConversionFactors.hpp>
+#include <opm/parser/eclipse/EclipseState/IOConfig/IOConfig.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Well.hpp>
 
 using namespace Opm;
 
 
 BOOST_AUTO_TEST_CASE( parse_WCONPROD_OK ) {
     ParserPtr parser(new Parser());
-    boost::filesystem::path wconprodFile("testdata/integration_tests/WellWithWildcards/WCONPROD1");
-    DeckPtr deck =  parser->parseFile(wconprodFile.string(), ParseMode());
+    std::string wconprodFile("testdata/integration_tests/WellWithWildcards/WCONPROD1");
+    DeckPtr deck =  parser->parseFile(wconprodFile, ParseMode());
     std::shared_ptr<const EclipseGrid> grid = std::make_shared<const EclipseGrid>( 30,30,30);
     IOConfigPtr ioConfig;
-    ScheduleConstPtr sched(new Schedule(ParseMode() , grid , deck, ioConfig));
+    SchedulePtr sched(new Schedule(ParseMode() , grid , deck, ioConfig));
 
     BOOST_CHECK_EQUAL(5U, sched->numWells());
     BOOST_CHECK(sched->hasWell("INJE1"));
@@ -74,11 +77,11 @@ BOOST_AUTO_TEST_CASE( parse_WCONPROD_OK ) {
 BOOST_AUTO_TEST_CASE( parse_WCONINJE_OK ) {
     ParseMode parseMode;
     ParserPtr parser(new Parser());
-    boost::filesystem::path wconprodFile("testdata/integration_tests/WellWithWildcards/WCONINJE1");
-    DeckPtr deck =  parser->parseFile(wconprodFile.string(), parseMode);
+    std::string wconprodFile("testdata/integration_tests/WellWithWildcards/WCONINJE1");
+    DeckPtr deck =  parser->parseFile(wconprodFile, parseMode);
     std::shared_ptr<const EclipseGrid> grid = std::make_shared<const EclipseGrid>( 30,30,30 );
     IOConfigPtr ioConfig;
-    ScheduleConstPtr sched(new Schedule(parseMode , grid , deck, ioConfig));
+    SchedulePtr sched(new Schedule(parseMode , grid , deck, ioConfig));
 
     BOOST_CHECK_EQUAL(5U, sched->numWells());
     BOOST_CHECK(sched->hasWell("PROD1"));

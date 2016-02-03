@@ -25,9 +25,20 @@
 #include <boost/lexical_cast.hpp>
 
 #include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
+#include <opm/parser/eclipse/OpmLog/LogUtil.hpp>
 #include <opm/parser/eclipse/Deck/Section.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
-#include <opm/parser/eclipse/Parser/ParserKeywords.hpp>
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/A.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/C.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/D.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/M.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/P.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/S.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/T.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/Z.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 
 #include <ert/ecl/ecl_grid.h>
@@ -617,6 +628,30 @@ namespace Opm {
     double EclipseGrid::getCellThicknes(size_t globalIndex) const {
         assertGlobalIndex( globalIndex );
         return ecl_grid_get_cell_thickness1( c_ptr() , static_cast<int>(globalIndex));
+    }
+
+
+    std::array<double, 3> EclipseGrid::getCellDims(size_t globalIndex) const {
+        assertGlobalIndex( globalIndex );
+        {
+            double dx = ecl_grid_get_cell_dx1( c_ptr() , globalIndex);
+            double dy = ecl_grid_get_cell_dy1( c_ptr() , globalIndex);
+            double dz = ecl_grid_get_cell_thickness1( c_ptr() , globalIndex);
+
+            return std::array<double,3>{ {dx , dy , dz }};
+        }
+    }
+
+    std::array<double, 3> EclipseGrid::getCellDims(size_t i , size_t j , size_t k) const {
+        assertIJK(i,j,k);
+        {
+            size_t globalIndex = getGlobalIndex( i,j,k );
+            double dx = ecl_grid_get_cell_dx1( c_ptr() , globalIndex);
+            double dy = ecl_grid_get_cell_dy1( c_ptr() , globalIndex);
+            double dz = ecl_grid_get_cell_thickness1( c_ptr() , globalIndex);
+
+            return std::array<double,3>{ {dx , dy , dz }};
+        }
     }
 
     std::array<double, 3> EclipseGrid::getCellCenter(size_t globalIndex) const {

@@ -19,37 +19,16 @@
 #ifndef OPM_PARSER_PVTG_TABLE_HPP
 #define	OPM_PARSER_PVTG_TABLE_HPP
 
-#include "FullTable.hpp"
-#include "PvtgInnerTable.hpp"
-#include "PvtgOuterTable.hpp"
+#include <opm/parser/eclipse/EclipseState/Tables/PvtxTable.hpp>
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
 
-    /*!
-     * \brief Read the table for the PVTG and provide convenient access to it.
-     */
-    class PvtgTable : public Opm::FullTable<Opm::PvtgOuterTable, Opm::PvtgInnerTable>
-    {
-        typedef Opm::FullTable<Opm::PvtgOuterTable, Opm::PvtgInnerTable> ParentType;
+    class DeckKeyword;
 
-        friend class TableManager;
-
-        using ParentType::init;
-
+    class PvtgTable : public PvtxTable {
     public:
-        PvtgTable() = default;
-
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckKeywordConstPtr keyword, size_t tableIdx)
-        { init(keyword, tableIdx); }
-#endif
+        PvtgTable(std::shared_ptr< const DeckKeyword > keyword, size_t tableIdx);
     };
-
-    typedef std::shared_ptr<PvtgTable> PvtgTablePtr;
-    typedef std::shared_ptr<const PvtgTable> PvtgConstTablePtr;
 }
 
 #endif

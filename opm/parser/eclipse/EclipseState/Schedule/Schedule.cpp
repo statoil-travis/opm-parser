@@ -22,21 +22,42 @@
 #include <stdexcept>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <opm/parser/eclipse/OpmLog/OpmLog.hpp>
+#include <opm/parser/eclipse/OpmLog/LogUtil.hpp>
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/Deck/DeckTimeStep.hpp>
 #include <opm/parser/eclipse/Deck/Section.hpp>
 #include <opm/parser/eclipse/Deck/SCHEDULESection.hpp>
-#include <opm/parser/eclipse/Parser/ParserKeywords.hpp>
+#include <opm/parser/eclipse/Parser/ParseMode.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/C.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/W.hpp>
 
-#include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/ScheduleEnums.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/TimeMap.hpp>
+#include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
+#include <opm/parser/eclipse/EclipseState/IOConfig/IOConfig.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/CompletionSet.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/DynamicState.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/DynamicVector.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/WellProductionProperties.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Events.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Group.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/GroupTree.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/MSW/Compsegs.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/MSW/SegmentSet.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/OilVaporizationProperties.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/ScheduleEnums.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/TimeMap.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Tuning.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Well.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/WellInjectionProperties.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/WellPolymerProperties.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/MSW/Compsegs.hpp>
-#include <opm/parser/eclipse/EclipseState/EclipseState.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/WellProductionProperties.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/WellSet.hpp>
+#include <opm/parser/eclipse/Units/Dimension.hpp>
+#include <opm/parser/eclipse/Units/UnitSystem.hpp>
 
 namespace Opm {
 
@@ -44,6 +65,10 @@ namespace Opm {
         : m_grid(grid)
     {
         initFromDeck(parseMode , deck, ioConfig);
+    }
+
+    boost::posix_time::ptime Schedule::getStartTime() const {
+        return m_timeMap->getStartTime(/*timeStepIdx=*/0);
     }
 
     void Schedule::initFromDeck(const ParseMode& parseMode , DeckConstPtr deck, IOConfigPtr ioConfig) {
@@ -178,6 +203,9 @@ namespace Opm {
 
             if (keyword->name() == "GCONPROD")
                 handleGCONPROD(keyword, currentStep);
+
+            if (keyword->name() == "GEFAC")
+                handleGEFAC(keyword, currentStep);
 
             if (keyword->name() == "TUNING")
                 handleTUNING(keyword, currentStep);
@@ -411,19 +439,14 @@ namespace Opm {
                 WellPtr well = *wellIter;
                 WellProductionProperties properties;
 
+                bool addGrupProductionControl = well->isAvailableForGroupControl(currentStep);
+
                 if (isPredictionMode)
-                    properties = WellProductionProperties::prediction( record );
+                    properties = WellProductionProperties::prediction( record, addGrupProductionControl );
                 else {
                     const WellProductionProperties& prev_properties = well->getProductionProperties(currentStep);
                     double BHPLimit = prev_properties.BHPLimit;
-                    properties = WellProductionProperties::history( BHPLimit , record );
-                }
-
-                if (well->isAvailableForGroupControl(currentStep)) {
-                    properties.addProductionControl(WellProducer::GRUP);
-                }
-                else {
-                    properties.dropProductionControl(WellProducer::GRUP);
+                    properties = WellProductionProperties::history( BHPLimit , record, addGrupProductionControl);
                 }
 
                 if (status != WellCommon::SHUT) {
@@ -1005,6 +1028,22 @@ namespace Opm {
         }
     }
 
+
+    void Schedule::handleGEFAC(std::shared_ptr<const DeckKeyword> keyword, size_t currentStep) {
+        for (size_t recordNr = 0; recordNr < keyword->size(); recordNr++) {
+            DeckRecordConstPtr record = keyword->getRecord(recordNr);
+            const std::string& groupName = record->getItem("GROUP")->getTrimmedString(0);
+            GroupPtr group = getGroup(groupName);
+
+            group->setGroupEfficiencyFactor(currentStep, record->getItem("EFFICIENCY_FACTOR")->getRawDouble(0));
+
+            const std::string& transfer_str = record->getItem("TRANSFER_EXT_NET")->getTrimmedString(0);
+            bool transfer = (transfer_str == "YES") ? true : false;
+            group->setTransferGroupEfficiencyFactor(currentStep, transfer);
+        }
+    }
+
+
     void Schedule::handleTUNING(DeckKeywordConstPtr keyword, size_t currentStep) {
 
         int numrecords = keyword->size();
@@ -1475,7 +1514,7 @@ namespace Opm {
         return wells;
     }
 
-    WellPtr Schedule::getWell(const std::string& wellName) const {
+    WellPtr Schedule::getWell(const std::string& wellName) {
         return m_wells.get( wellName );
     }
 
@@ -1486,7 +1525,7 @@ namespace Opm {
       been opened by the simulator.
     */
 
-    std::vector<WellPtr> Schedule::getOpenWells(size_t timeStep) const {
+    std::vector<WellPtr> Schedule::getOpenWells(size_t timeStep) {
         std::vector<WellPtr> wells;
         for (auto well_iter = m_wells.begin(); well_iter != m_wells.end(); ++well_iter) {
             auto well = *well_iter;
@@ -1497,7 +1536,7 @@ namespace Opm {
     }
 
 
-    std::vector<WellPtr> Schedule::getWells(const std::string& wellNamePattern) const {
+    std::vector<WellPtr> Schedule::getWells(const std::string& wellNamePattern) {
         std::vector<WellPtr> wells;
         size_t wildcard_pos = wellNamePattern.find("*");
         if (wildcard_pos == wellNamePattern.length()-1) {
@@ -1542,6 +1581,14 @@ namespace Opm {
             throw std::invalid_argument("Group: " + groupName + " does not exist");
     }
 
+    std::vector< const Group* > Schedule::getGroups() const {
+        std::vector< const Group* > groups;
+
+        for( const auto& itr : m_groups )
+            groups.push_back( itr.second.get() );
+
+        return groups;
+    }
 
     void Schedule::addWellToGroup( GroupPtr newGroup , WellPtr well , size_t timeStep) {
         const std::string currentGroupName = well->getGroupName(timeStep);

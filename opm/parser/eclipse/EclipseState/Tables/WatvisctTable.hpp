@@ -22,43 +22,13 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
 
     class WatvisctTable : public SimpleTable {
     public:
-        friend class TableManager;
-        WatvisctTable() = default;
+        WatvisctTable( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the WATVISCT keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{
-                                 "Temperature",
-                                 "Viscosity"
-                                     });
-
-            SimpleTable::checkNonDefaultable("Temperature");
-            SimpleTable::checkMonotonic("Temperature", /*isAscending=*/true);
-
-            SimpleTable::checkNonDefaultable("Viscosity");
-            SimpleTable::checkMonotonic("Viscosity", /*isAscending=*/false, /*strictlyMonotonic=*/false);
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getTemperatureColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getWaterViscosityColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getTemperatureColumn() const;
+        const TableColumn& getWaterViscosityColumn() const;
     };
 }
 

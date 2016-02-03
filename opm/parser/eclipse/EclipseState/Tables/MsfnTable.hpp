@@ -23,59 +23,17 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class MsfnTable : public SimpleTable {
     public:
+        MsfnTable( std::shared_ptr< const DeckItem > item );
 
-        friend class TableManager;
-        MsfnTable() = default;
+        const TableColumn& getGasPhaseFractionColumn() const;
+        const TableColumn& getGasSolventRelpermMultiplierColumn() const;
+        const TableColumn& getOilRelpermMultiplierColumn() const;
 
-        /*!
-         * \brief Read the PMISC keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{
-                                 "GasPhaseFraction",
-                                 "GasSolventRelpermMultiplier",
-                                 "OilRelpermMultiplier"
-                                     });
-
-            SimpleTable::checkNonDefaultable("GasPhaseFraction");
-            SimpleTable::checkMonotonic("GasPhaseFraction", /*isAscending=*/true);
-            SimpleTable::assertUnitRange("GasPhaseFraction");
-
-            SimpleTable::checkNonDefaultable("GasSolventRelpermMultiplier");
-            SimpleTable::checkMonotonic("GasSolventRelpermMultiplier", /*isAscending=*/true, /*isStriclyMonotonic=*/false);
-
-            SimpleTable::checkNonDefaultable("OilRelpermMultiplier");
-            SimpleTable::checkMonotonic("OilRelpermMultiplier", /*isAscending=*/false, /*isStriclyMonotonic=*/false);
-
-        }
-
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckItemConstPtr item)
-        { init(item); }
-#endif
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getGasPhaseFractionColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getGasSolventRelpermMultiplierColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        const std::vector<double> &getOilRelpermMultiplierColumn() const
-        { return SimpleTable::getColumn(2); }
     };
 }
 

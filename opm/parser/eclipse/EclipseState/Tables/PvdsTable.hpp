@@ -23,47 +23,16 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class PvdsTable : public SimpleTable {
     public:
-        friend class TableManager;
+        PvdsTable( std::shared_ptr< const DeckItem > item );
 
-        PvdsTable() = default;
-
-        /*!
-         * \brief Read the PVDS keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{"P", "BG", "MUG"});
-
-            SimpleTable::checkNonDefaultable("P");
-            SimpleTable::checkMonotonic("P", /*isAscending=*/true);
-
-            SimpleTable::applyDefaultsLinear("BG");
-            SimpleTable::checkMonotonic("BG", /*isAscending=*/false);
-
-            SimpleTable::applyDefaultsLinear("MUG");
-            SimpleTable::checkMonotonic("MUG", /*isAscending=*/true, /*strictlyMonotonic=*/false);
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getPressureColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getFormationFactorColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        const std::vector<double> &getViscosityColumn() const
-        { return SimpleTable::getColumn(2); }
+        const TableColumn& getPressureColumn() const;
+        const TableColumn& getFormationFactorColumn() const;
+        const TableColumn& getViscosityColumn() const;
     };
 }
 

@@ -22,48 +22,16 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class Sof2Table : public SimpleTable {
-        friend class TableManager;
+        public:
+            Sof2Table( std::shared_ptr< const DeckItem > item );
 
-        /*!
-         * \brief Read the SOF2 keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                              std::vector<std::string>{"SO", "KRO" });
-
-            SimpleTable::checkNonDefaultable("SO");
-            SimpleTable::checkNonDefaultable("KRO");
-            SimpleTable::checkMonotonic("SO", /*isAscending=*/true);
-            SimpleTable::checkMonotonic("KRO", /*isAscending=*/true, /*strict*/false);
-        }
-
-    public:
-        Sof2Table() = default;
-
-#ifdef BOOST_TEST_MODULE
-        // DO NOT TRY TO CALL THIS METHOD! it is only for the unit tests!
-        void initFORUNITTESTONLY(Opm::DeckItemConstPtr item)
-        { init(item); }
-#endif
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getSoColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getKroColumn() const
-        { return SimpleTable::getColumn(1); }
+            const TableColumn& getSoColumn() const;
+            const TableColumn& getKroColumn() const;
     };
 }
-
 #endif
 

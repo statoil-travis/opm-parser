@@ -19,9 +19,16 @@
 
 #include <stdexcept>
 
-#include <opm/parser/eclipse/Parser/ParserKeywords.hpp>
-
+#include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckItem.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/FaceDir.hpp>
 #include <opm/parser/eclipse/EclipseState/Grid/FaultCollection.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/FaultFace.hpp>
+#include <opm/parser/eclipse/EclipseState/Grid/Fault.hpp>
+#include <opm/parser/eclipse/Parser/ParserKeywords/F.hpp>
 
 namespace Opm {
 
@@ -75,11 +82,20 @@ namespace Opm {
     }
 
 
-    std::shared_ptr<Fault> FaultCollection::getFault(const std::string& faultName) const {
+    std::shared_ptr<const Fault> FaultCollection::getFault(const std::string& faultName) const {
         return m_faults.get( faultName );
     }
 
-    std::shared_ptr<Fault> FaultCollection::getFault(size_t faultIndex) const {
+    std::shared_ptr<Fault> FaultCollection::getFault(const std::string& faultName) {
+        return m_faults.get( faultName );
+    }
+
+
+    std::shared_ptr<Fault> FaultCollection::getFault(size_t faultIndex) {
+        return m_faults.get( faultIndex );
+    }
+
+    std::shared_ptr<const Fault> FaultCollection::getFault(size_t faultIndex) const {
         return m_faults.get( faultIndex );
     }
 

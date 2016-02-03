@@ -21,16 +21,18 @@
 #ifndef GROUP_HPP_
 #define GROUP_HPP_
 
-#include <opm/parser/eclipse/EclipseState/Schedule/TimeMap.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/ScheduleEnums.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/DynamicState.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/Well.hpp>
-#include <opm/parser/eclipse/EclipseState/Schedule/WellSet.hpp>
 
 #include <memory>
 #include <string>
 
 namespace Opm {
+
+    template< typename > class DynamicState;
+
+    class TimeMap;
+    class Well;
+    class WellSet;
 
     namespace GroupInjection {
         struct InjectionData;
@@ -43,7 +45,7 @@ namespace Opm {
 
     class Group {
     public:
-        Group(const std::string& name, TimeMapConstPtr timeMap , size_t creationTimeStep);
+        Group(const std::string& name, std::shared_ptr< const TimeMap > timeMap , size_t creationTimeStep);
         bool hasBeenDefined(size_t timeStep) const;
         const std::string& name() const;
         bool isProductionGroup(size_t timeStep) const;
@@ -90,22 +92,26 @@ namespace Opm {
         double getLiquidTargetRate(size_t time_step) const;
         void   setReservoirVolumeTargetRate(size_t time_step , double reservoirVolumeTargetRate);
         double getReservoirVolumeTargetRate(size_t time_step) const;
+        void   setGroupEfficiencyFactor(size_t time_step, double factor);
+        double getGroupEfficiencyFactor(size_t time_step) const;
+        void   setTransferGroupEfficiencyFactor(size_t time_step, bool transfer);
+        bool   getTransferGroupEfficiencyFactor(size_t time_step) const;
 
         /*****************************************************************/
 
         bool hasWell(const std::string& wellName , size_t time_step) const;
-        WellConstPtr getWell(const std::string& wellName , size_t time_step) const;
+        std::shared_ptr< const Well > getWell(const std::string& wellName , size_t time_step) const;
         size_t numWells(size_t time_step) const;
-        void addWell(size_t time_step , WellPtr well);
+        void addWell(size_t time_step , std::shared_ptr< Well > well);
         void delWell(size_t time_step, const std::string& wellName );
     private:
-        WellSetConstPtr wellMap(size_t time_step) const;
+        std::shared_ptr< const WellSet > wellMap(size_t time_step) const;
 
         size_t m_creationTimeStep;
         std::string m_name;
         std::shared_ptr<GroupInjection::InjectionData> m_injection;
         std::shared_ptr<GroupProduction::ProductionData> m_production;
-        std::shared_ptr<DynamicState<WellSetConstPtr> > m_wells;
+        std::shared_ptr<DynamicState<std::shared_ptr< const WellSet >> > m_wells;
         std::shared_ptr<DynamicState<bool> > m_isProductionGroup;
     };
     typedef std::shared_ptr<Group> GroupPtr;

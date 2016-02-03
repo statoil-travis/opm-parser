@@ -22,70 +22,21 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class RocktabTable : public  SimpleTable {
     public:
-        friend class TableManager;
-        RocktabTable() = default;
+        RocktabTable(std::shared_ptr< const DeckItem > item,
+                     bool isDirectional,
+                     bool hasStressOption);
 
-        /*!
-         * \brief Read the ROCKTAB keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item,
-                  bool isDirectional,
-                  bool hasStressOption)
-        {
-            SimpleTable::init(item,
-                              isDirectional
-                              ? std::vector<std::string>{"PO", "PV_MULT", "TRANSMIS_MULT_X", "TRANSMIS_MULT_Y", "TRANSMIS_MULT_Z"}
-                              : std::vector<std::string>{"PO", "PV_MULT", "TRANSMIS_MULT"});
-            m_isDirectional = isDirectional;
-
-            SimpleTable::checkNonDefaultable("PO");
-            SimpleTable::checkMonotonic("PO", /*isAscending=*/hasStressOption);
-            SimpleTable::applyDefaultsLinear("PV_MULT");
-            if (isDirectional) {
-                SimpleTable::applyDefaultsLinear("TRANSMIS_MULT");
-            } else {
-                SimpleTable::applyDefaultsLinear("TRANSMIS_MULT_X");
-                SimpleTable::applyDefaultsLinear("TRANSMIS_MULT_Y");
-                SimpleTable::applyDefaultsLinear("TRANSMIS_MULT_Z");
-            }
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getPressureColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getPoreVolumeMultiplierColumn() const
-        { return SimpleTable::getColumn(1); }
-
-        const std::vector<double> &getTransmissibilityMultiplierColumn() const
-        { return SimpleTable::getColumn(2); }
-
-        const std::vector<double> &getTransmissibilityMultiplierXColumn() const
-        { return SimpleTable::getColumn(2); }
-
-        const std::vector<double> &getTransmissibilityMultiplierYColumn() const
-        {
-            if (!m_isDirectional)
-                return SimpleTable::getColumn(2);
-            return SimpleTable::getColumn(3);
-        }
-
-        const std::vector<double> &getTransmissibilityMultiplierZColumn() const
-        {
-            if (!m_isDirectional)
-                return SimpleTable::getColumn(2);
-            return SimpleTable::getColumn(4);
-        }
+        const TableColumn& getPressureColumn() const;
+        const TableColumn& getPoreVolumeMultiplierColumn() const;
+        const TableColumn& getTransmissibilityMultiplierColumn() const;
+        const TableColumn& getTransmissibilityMultiplierXColumn() const;
+        const TableColumn& getTransmissibilityMultiplierYColumn() const;
+        const TableColumn& getTransmissibilityMultiplierZColumn() const;
 
     private:
         bool m_isDirectional;

@@ -22,42 +22,16 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckRecord;
 
     class PlymaxTable : public SimpleTable {
-    public:
-        friend class TableManager;
-        PlymaxTable() = default;
+        public:
 
-        /*!
-         * \brief Read the PLYMAX keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckRecordConstPtr record)
-        {
-            createColumns(std::vector<std::string>{"C_POLYMER", "C_POLYMER_MAX"});
-            for (size_t colIdx = 0; colIdx < record->size(); colIdx++) {
-                auto item = record->getItem( colIdx );
-                m_columns[colIdx].push_back( item->getSIDouble(0) );
-                m_valueDefaulted[colIdx].push_back( item->defaultApplied(0) );
-            }
-            SimpleTable::checkNonDefaultable("C_POLYMER");
-            SimpleTable::checkMonotonic("C_POLYMER", /*isAscending=*/false);
-            SimpleTable::checkNonDefaultable("C_POLYMER_MAX");
-            SimpleTable::checkMonotonic("C_POLYMER_MAX", /*isAscending=*/false);
-        }
+        PlymaxTable( std::shared_ptr< const DeckRecord > record );
 
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
-        const std::vector<double> &getPolymerConcentrationColumn() const
-        { return SimpleTable::getColumn(0); }
-
-        const std::vector<double> &getMaxPolymerConcentrationColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getPolymerConcentrationColumn() const;
+        const TableColumn& getMaxPolymerConcentrationColumn() const;
     };
 }
 

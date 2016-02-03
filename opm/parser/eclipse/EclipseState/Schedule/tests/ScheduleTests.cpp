@@ -28,12 +28,23 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
+#include <opm/parser/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/parser/eclipse/EclipseState/Schedule/Schedule.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Group.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/GroupTree.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/CompletionSet.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/OilVaporizationProperties.hpp>
+#include <opm/parser/eclipse/EclipseState/Schedule/Well.hpp>
 #include <opm/parser/eclipse/Deck/DeckIntItem.hpp>
 #include <opm/parser/eclipse/Deck/DeckStringItem.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
+#include <opm/parser/eclipse/Deck/DeckKeyword.hpp>
+#include <opm/parser/eclipse/Deck/DeckRecord.hpp>
+#include <opm/parser/eclipse/EclipseState/IOConfig/IOConfig.hpp>
 #include <opm/parser/eclipse/Parser/Parser.hpp>
 #include <opm/parser/eclipse/Parser/ParseMode.hpp>
+#include <opm/parser/eclipse/Units/Dimension.hpp>
+#include <opm/parser/eclipse/Units/UnitSystem.hpp>
 
 using namespace Opm;
 
@@ -245,8 +256,7 @@ BOOST_AUTO_TEST_CASE(CreateSchedule_DeckWithoutGRUPTREE_HasRootGroupTreeNodeForT
     BOOST_CHECK_EQUAL("FIELD", schedule.getGroupTree(0)->getNode("FIELD")->name());
 }
 
-BOOST_AUTO_TEST_CASE(CreateSchedule_DeckWithGRUPTREE_HasRootGroupTreeNodeForTimeStepZero) {
-    std::shared_ptr<const EclipseGrid> grid = std::make_shared<const EclipseGrid>(10,10,10);
+static std::shared_ptr< Deck > deckWithGRUPTREE() {
     DeckPtr deck = createDeck();
     DeckKeywordPtr gruptreeKeyword(new DeckKeyword("GRUPTREE"));
 
@@ -260,12 +270,38 @@ BOOST_AUTO_TEST_CASE(CreateSchedule_DeckWithGRUPTREE_HasRootGroupTreeNodeForTime
     recordChildOfField->addItem(itemParent1);
     gruptreeKeyword->addRecord(recordChildOfField);
     deck->addKeyword(gruptreeKeyword);
+
+    return deck;
+}
+
+BOOST_AUTO_TEST_CASE(CreateSchedule_DeckWithGRUPTREE_HasRootGroupTreeNodeForTimeStepZero) {
+    auto grid = std::make_shared<const EclipseGrid>(10,10,10);
+    auto deck = deckWithGRUPTREE();
     IOConfigPtr ioConfig;
     Schedule schedule(ParseMode() , grid , deck, ioConfig);
     GroupTreeNodePtr fieldNode = schedule.getGroupTree(0)->getNode("FIELD");
     BOOST_CHECK_EQUAL("FIELD", fieldNode->name());
     GroupTreeNodePtr FAREN = fieldNode->getChildGroup("FAREN");
     BOOST_CHECK(FAREN->hasChildGroup("BARNET"));
+}
+
+BOOST_AUTO_TEST_CASE(GetGroups) {
+    auto deck = deckWithGRUPTREE();
+    auto grid = std::make_shared<const EclipseGrid>(10,10,10);
+    IOConfigPtr ioConfig;
+    Schedule schedule(ParseMode() , grid , deck, ioConfig);
+
+    auto groups = schedule.getGroups();
+
+    BOOST_CHECK_EQUAL( 3, groups.size() );
+
+    std::vector< std::string > names;
+    for( const auto group : groups ) names.push_back( group->name() );
+    std::sort( names.begin(), names.end() );
+
+    BOOST_CHECK_EQUAL( "BARNET", names[ 0 ] );
+    BOOST_CHECK_EQUAL( "FAREN",  names[ 1 ] );
+    BOOST_CHECK_EQUAL( "FIELD",  names[ 2 ] );
 }
 
 BOOST_AUTO_TEST_CASE(EmptyScheduleHasFIELDGroup) {
@@ -284,10 +320,10 @@ BOOST_AUTO_TEST_CASE(WellsIterator_Empty_EmptyVectorReturned) {
     DeckPtr deck = createDeck();
     IOConfigPtr ioConfig;
     Schedule schedule(ParseMode() , grid , deck, ioConfig);
-
+    size_t timeStep = 0;
     std::vector<WellConstPtr> wells_alltimesteps = schedule.getWells();
     BOOST_CHECK_EQUAL(0U, wells_alltimesteps.size());
-    std::vector<WellConstPtr> wells_t0 = schedule.getWells(0);
+    std::vector<WellConstPtr> wells_t0 = schedule.getWells(timeStep);
     BOOST_CHECK_EQUAL(0U, wells_t0.size());
 
     BOOST_CHECK_THROW(schedule.getWells(1), std::invalid_argument);
@@ -298,10 +334,11 @@ BOOST_AUTO_TEST_CASE(WellsIterator_HasWells_WellsReturned) {
     DeckPtr deck = createDeckWithWells();
     IOConfigPtr ioConfig;
     Schedule schedule(ParseMode() , grid , deck, ioConfig);
+    size_t timeStep = 0;
 
     std::vector<WellConstPtr> wells_alltimesteps = schedule.getWells();
     BOOST_CHECK_EQUAL(3U, wells_alltimesteps.size());
-    std::vector<WellConstPtr> wells_t0 = schedule.getWells(0);
+    std::vector<WellConstPtr> wells_t0 = schedule.getWells(timeStep);
     BOOST_CHECK_EQUAL(1U, wells_t0.size());
     std::vector<WellConstPtr> wells_t3 = schedule.getWells(3);
     BOOST_CHECK_EQUAL(3U, wells_t3.size());

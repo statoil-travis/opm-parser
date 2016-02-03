@@ -22,103 +22,58 @@
 #include "SimpleTable.hpp"
 
 namespace Opm {
-    // forward declaration
-    class TableManager;
+
+    class DeckItem;
 
     class EnptvdTable : public SimpleTable {
     public:
-
-        friend class TableManager;
-        EnptvdTable() = default;
-
-        /*!
-         * \brief Read the ENPTVD keyword and provide some convenience
-         *        methods for it.
-         */
-        void init(Opm::DeckItemConstPtr item)
-        {
-            SimpleTable::init(item,
-                             std::vector<std::string>{"DEPTH",
-                                      "SWCO",
-                                      "SWCRIT",
-                                      "SWMAX",
-                                      "SGCO",
-                                      "SGCRIT",
-                                      "SGMAX",
-                                      "SOWCRIT",
-                                      "SOGCRIT"});
-
-            SimpleTable::checkNonDefaultable("DEPTH");
-            SimpleTable::checkMonotonic("DEPTH", /*isAscending=*/true);
-            SimpleTable::applyDefaultsLinear("SWCO");
-            SimpleTable::applyDefaultsLinear("SWCRIT");
-            SimpleTable::applyDefaultsLinear("SWMAX");
-            SimpleTable::applyDefaultsLinear("SGCO");
-            SimpleTable::applyDefaultsLinear("SGCRIT");
-            SimpleTable::applyDefaultsLinear("SGMAX");
-            SimpleTable::applyDefaultsLinear("SOWCRIT");
-            SimpleTable::applyDefaultsLinear("SOGCRIT");
-        }
-
-        using SimpleTable::numTables;
-        using SimpleTable::numRows;
-        using SimpleTable::numColumns;
-        using SimpleTable::evaluate;
-
+        EnptvdTable( std::shared_ptr< const DeckItem > item );
+        
         // using this method is strongly discouraged but the current endpoint scaling
         // code makes it hard to avoid
         using SimpleTable::getColumn;
 
-        const std::vector<double> &getDepthColumn() const
-        { return SimpleTable::getColumn(0); }
+        const TableColumn& getDepthColumn() const;
 
         /*!
          * \brief Connate water saturation
          */
-        const std::vector<double> &getSwcoColumn() const
-        { return SimpleTable::getColumn(1); }
+        const TableColumn& getSwcoColumn() const;
 
         /*!
          * \brief Critical water saturation
          */
-        const std::vector<double> &getSwcritColumn() const
-        { return SimpleTable::getColumn(2); }
+        const TableColumn& getSwcritColumn() const;
 
         /*!
          * \brief Maximum water saturation
          */
-        const std::vector<double> &getSwmaxColumn() const
-        { return SimpleTable::getColumn(3); }
+        const TableColumn& getSwmaxColumn() const;
 
         /*!
          * \brief Connate gas saturation
          */
-        const std::vector<double> &getSgcoColumn() const
-        { return SimpleTable::getColumn(4); }
+        const TableColumn& getSgcoColumn() const;
 
         /*!
          * \brief Critical gas saturation
          */
-        const std::vector<double> &getSgcritColumn() const
-        { return SimpleTable::getColumn(5); }
+        const TableColumn& getSgcritColumn() const;
 
         /*!
          * \brief Maximum gas saturation
          */
-        const std::vector<double> &getSgmaxColumn() const
-        { return SimpleTable::getColumn(6); }
+        const TableColumn& getSgmaxColumn() const;
 
         /*!
          * \brief Critical oil-in-water saturation
          */
-        const std::vector<double> &getSowcritColumn() const
-        { return SimpleTable::getColumn(7); }
+        const TableColumn& getSowcritColumn() const;
 
         /*!
          * \brief Critical oil-in-gas saturation
          */
-        const std::vector<double> &getSogcritColumn() const
-        { return SimpleTable::getColumn(8); }
+        const TableColumn& getSogcritColumn() const;
     };
 }
 
